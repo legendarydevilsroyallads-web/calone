@@ -7,23 +7,11 @@
 <style>
 @page { size:A4; margin:10mm; }
 
-body {
-    margin:0;
-    font-family:"Courier New", monospace;
-    font-size:10pt;
-}
+body { margin:0; font-family:"Courier New", monospace; font-size:10pt; }
 
 .print-area { padding:10px; }
-
-.print-btn {
-    padding:6px 14px;
-    font-size:10pt;
-    cursor:pointer;
-}
-
-@media print {
-    .print-area { display:none; }
-}
+.print-btn { padding:6px 14px; font-size:10pt; cursor:pointer; }
+@media print { .print-area { display:none; } }
 
 .page {
     width:190mm;
@@ -33,19 +21,9 @@ body {
     column-gap:20mm;
 }
 
-.column {
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-}
+.column { display:flex; flex-direction:column; justify-content:space-between; }
 
-.problem {
-    display:grid;
-    grid-template-columns:18mm auto;
-    align-items:start;
-}
-
-/* ===== 足し算・引き算・かけ算 ===== */
+.problem { display:grid; grid-template-columns:18mm auto; align-items:start; }
 
 .vertical {
     display:grid;
@@ -53,35 +31,12 @@ body {
     line-height:1.2;
 }
 
-.line {
-    grid-column:1 / span 7;
-    border-top:1px solid black;
-    margin-top:2px;
-}
+.line { grid-column:1/span 7; border-top:1px solid black; margin-top:2px; }
 
-/* ===== 割り算 ===== */
-
-.division-wrapper {
-    display:flex;
-    flex-direction:column;
-}
-
-.answer-line {
-    border-top:1px solid black;
-    height:0;
-    margin-left:20mm;
-    margin-bottom:2mm;
-}
-
-.division-row {
-    display:flex;
-}
-
-.divisor {
-    min-width:20mm;
-    text-align:right;
-    margin-right:2mm;
-}
+.division-wrapper { display:flex; flex-direction:column; }
+.answer-line { border-top:1px solid black; margin-left:20mm; margin-bottom:2mm; height:0; }
+.division-row { display:flex; }
+.divisor { min-width:20mm; text-align:right; margin-right:2mm; }
 </style>
 </head>
 <body>
@@ -97,39 +52,21 @@ body {
 
 <script>
 
-/* ===== パラメータ取得 ===== */
-
 const params = new URLSearchParams(window.location.search);
 const operation = params.get("operation") || "add";
 const option = params.get("option") || "carry_yes";
-const digit1 = parseInt(params.get("digit1")) || 3;
-const digit2 = parseInt(params.get("digit2")) || 3;
+const digit1 = parseInt(params.get("digit1")) || 2;
+const digit2 = parseInt(params.get("digit2")) || 1;
 
-const TOTAL = 20;
-const PER_COL = 10;
-
-/* ===== タイトル自動変更 ===== */
-
-function getTitle(op){
-    if(op==="add") return "足し算プリント";
-    if(op==="sub") return "引き算プリント";
-    if(op==="mul") return "かけ算プリント";
-    if(op==="div") return "割り算プリント";
-    return "計算プリント";
-}
-document.title = getTitle(operation);
-
-/* ===== 共通関数 ===== */
+const TOTAL=20, PER_COL=10;
 
 function randomNumber(d){
-    const min = Math.pow(10,d-1);
-    const max = Math.pow(10,d)-1;
+    const min=Math.pow(10,d-1);
+    const max=Math.pow(10,d)-1;
     return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-function pad(num){
-    return String(num).padStart(6," ");
-}
+function pad(n){ return String(n).padStart(6," "); }
 
 function getSymbol(){
     if(operation==="add") return "+";
@@ -141,94 +78,86 @@ function getSymbol(){
 
 function generateAdd(){
 
-    let a="", b="";
-    let carryMade=false;
+    let a=randomNumber(digit1);
+    let b=randomNumber(digit2);
 
-    for(let i=0;i<digit1;i++){
-
-        let da=Math.floor(Math.random()*10);
-        let db;
-
-        if(option==="carry_no"){
-            db=Math.floor(Math.random()*(10-da));
-        }
-        else{
-            if(!carryMade && i===0){
-                da=Math.floor(Math.random()*9)+1;
-                db=10-da+Math.floor(Math.random()*(10-(10-da)));
-                carryMade=true;
-            } else {
-                db=Math.floor(Math.random()*10);
+    if(option==="carry_no"){
+        while(true){
+            let ok=true;
+            let x=a,y=b;
+            while(x>0||y>0){
+                if((x%10)+(y%10)>=10){ ok=false; break; }
+                x=Math.floor(x/10);
+                y=Math.floor(y/10);
             }
+            if(ok) break;
+            a=randomNumber(digit1);
+            b=randomNumber(digit2);
         }
-
-        a+=da;
-        b+=db;
     }
 
-    return {a:parseInt(a), b:parseInt(b)};
+    return {a,b};
 }
 
 /* ===== 引き算 ===== */
 
 function generateSub(){
 
-    let a="", b="";
-    let borrowMade=false;
+    let a=randomNumber(digit1);
+    let b=randomNumber(digit2);
 
-    for(let i=0;i<digit1;i++){
-
-        let da=Math.floor(Math.random()*10);
-        let db;
-
-        if(option==="borrow_no"){
-            db=Math.floor(Math.random()*(da+1));
-        }
-        else{
-            if(!borrowMade && i===0){
-                da=Math.floor(Math.random()*9);
-                db=da+1+Math.floor(Math.random()*(9-da));
-                borrowMade=true;
-            } else {
-                db=Math.floor(Math.random()*10);
-            }
-        }
-
-        a+=da;
-        b+=db;
+    if(a<b){
+        const temp=a; a=b; b=temp;
     }
 
-    if(parseInt(a)<parseInt(b)) return generateSub();
-    return {a:parseInt(a), b:parseInt(b)};
+    if(option==="borrow_no"){
+        while(true){
+            let ok=true;
+            let x=a,y=b;
+            while(x>0||y>0){
+                if((x%10)<(y%10)){ ok=false; break; }
+                x=Math.floor(x/10);
+                y=Math.floor(y/10);
+            }
+            if(ok) break;
+            a=randomNumber(digit1);
+            b=randomNumber(digit2);
+            if(a<b){ const t=a;a=b;b=t; }
+        }
+    }
+
+    return {a,b};
 }
 
 /* ===== かけ算 ===== */
 
 function generateMul(){
-    return {
-        a: randomNumber(digit1),
-        b: randomNumber(digit2)
-    };
+    return { a:randomNumber(digit1), b:randomNumber(digit2) };
 }
 
 /* ===== 割り算 ===== */
 
 function generateDiv(){
 
-    const divisor = randomNumber(digit2);
-    const quotient = randomNumber(1);
+    const divisor=randomNumber(digit2);
+    const quotient=randomNumber(Math.max(1,digit1-digit2+1));
 
-    let dividend = divisor * quotient;
+    let dividend=divisor*quotient;
 
     if(option==="remainder_yes"){
-        const remainder = Math.floor(Math.random()*(divisor-1))+1;
-        dividend += remainder;
+        const r=Math.floor(Math.random()*(divisor-1))+1;
+        dividend+=r;
+    }
+
+    // 桁数が合わない場合は再生成
+    if(String(dividend).length!==digit1){
+        return generateDiv();
     }
 
     return {a:dividend, b:divisor};
 }
 
-/* ===== 問題作成 ===== */
+/* ===== 描画 ===== */
 
 function createVertical(n,a,b){
 
@@ -241,8 +170,7 @@ function createVertical(n,a,b){
     const grid=document.createElement("div");
     grid.className="vertical";
 
-    for(let i=0;i<7;i++)
-        grid.appendChild(document.createElement("div"));
+    for(let i=0;i<7;i++) grid.appendChild(document.createElement("div"));
 
     grid.appendChild(document.createElement("div"));
     pad(a).split("").forEach(ch=>{
@@ -270,7 +198,7 @@ function createVertical(n,a,b){
     return wrapper;
 }
 
-function createDivision(n, dividend, divisor){
+function createDivision(n,a,b){
 
     const wrapper=document.createElement("div");
     wrapper.className="problem";
@@ -283,24 +211,24 @@ function createDivision(n, dividend, divisor){
 
     const line=document.createElement("div");
     line.className="answer-line";
-    line.style.width=(String(dividend).length*6)+"mm";
+    line.style.width=(String(a).length*6)+"mm";
 
     const row=document.createElement("div");
     row.className="division-row";
 
-    const divisorDiv=document.createElement("div");
-    divisorDiv.className="divisor";
-    divisorDiv.textContent=divisor;
+    const d1=document.createElement("div");
+    d1.className="divisor";
+    d1.textContent=b;
 
     const bracket=document.createElement("div");
     bracket.textContent="）";
 
-    const dividendDiv=document.createElement("div");
-    dividendDiv.textContent=dividend;
+    const d2=document.createElement("div");
+    d2.textContent=a;
 
-    row.appendChild(divisorDiv);
+    row.appendChild(d1);
     row.appendChild(bracket);
-    row.appendChild(dividendDiv);
+    row.appendChild(d2);
 
     box.appendChild(line);
     box.appendChild(row);
@@ -311,7 +239,7 @@ function createDivision(n, dividend, divisor){
     return wrapper;
 }
 
-/* ===== 配置 ===== */
+/* ===== 出力 ===== */
 
 for(let i=1;i<=TOTAL;i++){
 
@@ -327,10 +255,8 @@ for(let i=1;i<=TOTAL;i++){
         ? createDivision(i,pair.a,pair.b)
         : createVertical(i,pair.a,pair.b);
 
-    if(i<=PER_COL)
-        col1.appendChild(problem);
-    else
-        col2.appendChild(problem);
+    if(i<=PER_COL) col1.appendChild(problem);
+    else col2.appendChild(problem);
 }
 
 </script>
