@@ -2,58 +2,70 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>計算プリント</title>
+<title>割り算プリント</title>
 
 <style>
-@page {
-    size: A4;
-    margin: 10mm;
-}
+@page { size:A4; margin:10mm; }
 
 body {
-    margin: 0;
-    font-family: "Courier New", monospace;
-    font-size: 10pt;
+    margin:0;
+    font-family:"Courier New", monospace;
+    font-size:10pt;
 }
 
+.print-area { padding:10px; }
+
+.print-btn {
+    padding:6px 14px;
+    font-size:10pt;
+    cursor:pointer;
+}
+
+@media print { .print-area { display:none; } }
+
 .page {
-    width: 190mm;
-    height: 277mm;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 20mm;
+    width:190mm;
+    height:277mm;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    column-gap:20mm;
 }
 
 .column {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
 }
 
 .problem {
-    display: grid;
-    grid-template-columns: 18mm auto;
-    align-items: start;
+    display:grid;
+    grid-template-columns:18mm auto;
 }
 
-.number {
-    font-size: 10pt;
+.division-box {
+    display:flex;
+    flex-direction:column;
 }
 
-.vertical {
-    display: grid;
-    grid-template-columns: 1ch repeat(6,1ch);
-    line-height: 1.2;
+.answer-line {
+    border-top:1px solid black;
+    width:40mm;
+    margin-left:10mm;
+    margin-bottom:3mm;
 }
 
-.line {
-    grid-column: 1 / span 7;
-    border-top: 1px solid black;
-    margin-top: 2px;
+.div-row {
+    display:flex;
+    align-items:flex-start;
 }
+
 </style>
 </head>
 <body>
+
+<div class="print-area">
+<button class="print-btn" onclick="window.print()">印刷する</button>
+</div>
 
 <div class="page">
     <div class="column" id="col1"></div>
@@ -62,18 +74,13 @@ body {
 
 <script>
 
-/* ===== URLパラメータ取得 ===== */
-
 const params = new URLSearchParams(window.location.search);
 
-const operation = params.get("operation") || "add";
 const digit1 = parseInt(params.get("digit1")) || 3;
 const digit2 = parseInt(params.get("digit2")) || 3;
+const option = params.get("option") || "remainder_yes";
 
-const totalProblems = 20;
-const perColumn = 10;
-
-/* ===== 数字生成 ===== */
+const total = 20;
 
 function randomNumber(d){
     const min = Math.pow(10,d-1);
@@ -81,78 +88,53 @@ function randomNumber(d){
     return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-function getSymbol(op){
-    if(op==="add") return "+";
-    if(op==="sub") return "-";
-    if(op==="mul") return "×";
+function generateDivision(){
+    while(true){
+        let a=randomNumber(digit1);
+        let b=randomNumber(digit2);
+        if(b===0) continue;
+        const r=a%b;
+        if(option==="remainder_yes" && r!==0) return {a,b};
+        if(option==="remainder_no" && r===0) return {a,b};
+    }
 }
-
-/* 6桁固定表示（右揃え） */
-function pad(num){
-    return String(num).padStart(6," ");
-}
-
-/* ===== 問題生成 ===== */
 
 function createProblem(n,a,b){
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "problem";
+    const wrapper=document.createElement("div");
+    wrapper.className="problem";
 
-    const numDiv = document.createElement("div");
-    numDiv.className = "number";
-    numDiv.textContent = "(" + n + ")";
+    const num=document.createElement("div");
+    num.textContent="("+n+")";
 
-    const grid = document.createElement("div");
-    grid.className = "vertical";
-
-    /* 空行 */
-    for(let i=0;i<7;i++){
-        grid.appendChild(document.createElement("div"));
-    }
-
-    /* 上段 */
-    grid.appendChild(document.createElement("div"));
-    pad(a).split("").forEach(ch=>{
-        const d=document.createElement("div");
-        d.textContent = ch===" "?"":ch;
-        grid.appendChild(d);
-    });
-
-    /* 下段 */
-    const sym=document.createElement("div");
-    sym.textContent=getSymbol(operation);
-    grid.appendChild(sym);
-
-    pad(b).split("").forEach(ch=>{
-        const d=document.createElement("div");
-        d.textContent = ch===" "?"":ch;
-        grid.appendChild(d);
-    });
+    const box=document.createElement("div");
+    box.className="division-box";
 
     const line=document.createElement("div");
-    line.className="line";
-    grid.appendChild(line);
+    line.className="answer-line";
 
-    wrapper.appendChild(numDiv);
-    wrapper.appendChild(grid);
+    const row=document.createElement("div");
+    row.className="div-row";
+    row.textContent=b+" ）"+a;
+
+    box.appendChild(line);
+    box.appendChild(row);
+
+    wrapper.appendChild(num);
+    wrapper.appendChild(box);
 
     return wrapper;
 }
 
-/* ===== 配置 ===== */
+for(let i=1;i<=total;i++){
 
-for(let i=1;i<=totalProblems;i++){
+    const pair=generateDivision();
+    const p=createProblem(i,pair.a,pair.b);
 
-    const a = randomNumber(digit1);
-    const b = randomNumber(digit2);
-
-    const problem = createProblem(i,a,b);
-
-    if(i<=perColumn){
-        document.getElementById("col1").appendChild(problem);
+    if(i<=10){
+        col1.appendChild(p);
     }else{
-        document.getElementById("col2").appendChild(problem);
+        col2.appendChild(p);
     }
 }
 
