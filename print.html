@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>計算プリント</title>
+<title>割り算プリント</title>
 
 <style>
 @page { size:A4; margin:10mm; }
@@ -13,9 +13,7 @@ body {
     font-size:10pt;
 }
 
-.print-area {
-    padding:10px;
-}
+.print-area { padding:10px; }
 
 .print-btn {
     padding:6px 14px;
@@ -47,45 +45,66 @@ body {
     align-items:start;
 }
 
-.vertical {
-    display:grid;
-    grid-template-columns:1ch repeat(6,1ch);
-    line-height:1.2;
+/* ===== 割り算専用構造 ===== */
+
+.division-wrapper {
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
 }
 
-.line {
-    grid-column:1 / span 7;
+.answer-line {
     border-top:1px solid black;
-    margin-top:2px;
+    height:0;
+    margin-left:20mm;   /* 割る数分ずらす */
+    margin-bottom:2mm;
 }
+
+.division-row {
+    display:flex;
+    align-items:flex-start;
+}
+
+.divisor {
+    min-width:20mm;
+    text-align:right;
+    margin-right:2mm;
+}
+
+.bracket {
+    margin-right:2mm;
+}
+
+.dividend {
+    min-width:30mm;
+    text-align:left;
+}
+
 </style>
 </head>
 <body>
 
 <div class="print-area">
-    <button class="print-btn" onclick="window.print()">印刷する</button>
+<button class="print-btn" onclick="window.print()">印刷する</button>
 </div>
 
 <div class="page">
-    <div class="column" id="col1"></div>
-    <div class="column" id="col2"></div>
+<div class="column" id="col1"></div>
+<div class="column" id="col2"></div>
 </div>
 
 <script>
 
-/* ===== パラメータ取得 ===== */
-
 const params = new URLSearchParams(window.location.search);
 
-const operation = params.get("operation") || "add";
-const option = params.get("option") || "carry_yes";
 const digit1 = parseInt(params.get("digit1")) || 3;
-const digit2 = parseInt(params.get("digit2")) || 3;
+const digit2 = parseInt(params.get("digit2")) || 2;
+const option = params.get("option") || "remainder_yes";
 
 const TOTAL = 20;
 const PER_COL = 10;
 
-/* ===== 数値生成 ===== */
+/* ===== 数字生成 ===== */
 
 function randomNumber(d){
     const min = Math.pow(10,d-1);
@@ -93,121 +112,66 @@ function randomNumber(d){
     return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-function hasCarry(a,b){
-    while(a>0||b>0){
-        if((a%10)+(b%10)>=10) return true;
-        a=Math.floor(a/10);
-        b=Math.floor(b/10);
+function generateDivision(){
+
+    while(true){
+
+        let dividend = randomNumber(digit1);
+        let divisor  = randomNumber(digit2);
+
+        if(divisor===0) continue;
+
+        const r = dividend % divisor;
+
+        if(option==="remainder_yes" && r!==0)
+            return {dividend, divisor};
+
+        if(option==="remainder_no" && r===0)
+            return {dividend, divisor};
     }
-    return false;
 }
 
-function hasBorrow(a,b){
-    while(a>0||b>0){
-        if((a%10)<(b%10)) return true;
-        a=Math.floor(a/10);
-        b=Math.floor(b/10);
-    }
-    return false;
-}
+/* ===== 問題作成 ===== */
 
-/* ===== 安全生成（無限ループ防止） ===== */
+function createProblem(n, dividend, divisor){
 
-function generatePair(){
+    const wrapper = document.createElement("div");
+    wrapper.className = "problem";
 
-    let tries = 0;
-    const MAX = 1000;
+    const number = document.createElement("div");
+    number.textContent = "(" + n + ")";
 
-    while(tries < MAX){
+    const divWrap = document.createElement("div");
+    divWrap.className = "division-wrapper";
 
-        tries++;
+    const answerLine = document.createElement("div");
+    answerLine.className = "answer-line";
+    answerLine.style.width = (String(dividend).length * 6) + "mm";
 
-        let a = randomNumber(digit1);
-        let b = randomNumber(digit2);
+    const row = document.createElement("div");
+    row.className = "division-row";
 
-        if(operation==="add"){
-            const carry = hasCarry(a,b);
-            if(option==="carry_yes" && carry) return {a,b};
-            if(option==="carry_no" && !carry) return {a,b};
-        }
+    const divisorDiv = document.createElement("div");
+    divisorDiv.className = "divisor";
+    divisorDiv.textContent = divisor;
 
-        else if(operation==="sub"){
-            if(a < b) continue;
-            const borrow = hasBorrow(a,b);
-            if(option==="borrow_yes" && borrow) return {a,b};
-            if(option==="borrow_no" && !borrow) return {a,b};
-        }
+    const bracket = document.createElement("div");
+    bracket.className = "bracket";
+    bracket.textContent = "）";
 
-        else if(operation==="mul"){
-            return {a,b};
-        }
+    const dividendDiv = document.createElement("div");
+    dividendDiv.className = "dividend";
+    dividendDiv.textContent = dividend;
 
-        else if(operation==="div"){
-            if(b===0) continue;
-            const r = a % b;
-            if(option==="remainder_yes" && r!==0) return {a,b};
-            if(option==="remainder_no" && r===0) return {a,b};
-        }
-    }
+    row.appendChild(divisorDiv);
+    row.appendChild(bracket);
+    row.appendChild(dividendDiv);
 
-    // 条件が厳しすぎる場合の保険
-    return {
-        a: randomNumber(digit1),
-        b: randomNumber(digit2)
-    };
-}
-
-/* ===== 表示 ===== */
-
-function getSymbol(){
-    if(operation==="add") return "+";
-    if(operation==="sub") return "-";
-    if(operation==="mul") return "×";
-    if(operation==="div") return "÷";
-}
-
-function pad(num){
-    return String(num).padStart(6," ");
-}
-
-function createProblem(n,a,b){
-
-    const wrapper=document.createElement("div");
-    wrapper.className="problem";
-
-    const number=document.createElement("div");
-    number.textContent="("+n+")";
-
-    const grid=document.createElement("div");
-    grid.className="vertical";
-
-    for(let i=0;i<7;i++){
-        grid.appendChild(document.createElement("div"));
-    }
-
-    grid.appendChild(document.createElement("div"));
-    pad(a).split("").forEach(ch=>{
-        const d=document.createElement("div");
-        d.textContent=ch===" "?"":ch;
-        grid.appendChild(d);
-    });
-
-    const sym=document.createElement("div");
-    sym.textContent=getSymbol();
-    grid.appendChild(sym);
-
-    pad(b).split("").forEach(ch=>{
-        const d=document.createElement("div");
-        d.textContent=ch===" "?"":ch;
-        grid.appendChild(d);
-    });
-
-    const line=document.createElement("div");
-    line.className="line";
-    grid.appendChild(line);
+    divWrap.appendChild(answerLine);
+    divWrap.appendChild(row);
 
     wrapper.appendChild(number);
-    wrapper.appendChild(grid);
+    wrapper.appendChild(divWrap);
 
     return wrapper;
 }
@@ -216,13 +180,13 @@ function createProblem(n,a,b){
 
 for(let i=1;i<=TOTAL;i++){
 
-    const pair = generatePair();
-    const problem = createProblem(i,pair.a,pair.b);
+    const pair = generateDivision();
+    const p = createProblem(i, pair.dividend, pair.divisor);
 
     if(i<=PER_COL){
-        document.getElementById("col1").appendChild(problem);
-    }else{
-        document.getElementById("col2").appendChild(problem);
+        col1.appendChild(p);
+    } else {
+        col2.appendChild(p);
     }
 }
 
