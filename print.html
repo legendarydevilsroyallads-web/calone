@@ -7,44 +7,68 @@
 <style>
 @page { size:A4; margin:1cm; }
 
-body { font-family:sans-serif; margin:0; }
+body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    margin:0;
+}
 
-.print-btn { margin:20px; padding:10px 20px; font-size:16px; }
+.print-btn {
+    margin:20px;
+    padding:10px 20px;
+    font-size:16px;
+}
 
 .page {
     height: calc(297mm - 2cm);
     display:flex;
     flex-direction:column;
-    justify-content:center;
+    justify-content:flex-start;
     page-break-after:always;
+}
+
+.header {
+    margin-bottom:20px;
+}
+
+.title {
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.name-line {
+    display:flex;
+    justify-content:space-between;
+    font-size:18px;
+    margin-bottom:10px;
 }
 
 .columns {
     display:grid;
     grid-template-columns:1fr 1fr;
-    height:100%;
+    flex:1;
 }
 
 .column {
     display:flex;
     flex-direction:column;
     justify-content:space-evenly;
-    padding:0 20px;
+    padding:0 30px;
 }
 
-.problem { font-size:26px; }
-
-.vertical-box {
-    display:inline-block;
-    text-align:right;
-    font-size:26px;
-    line-height:1.4;
+.problem {
+    font-size:24px;
 }
 
 .vertical-line {
     border-top:2px solid black;
     margin-top:5px;
-    width:100%;
+}
+
+.division-box {
+    display:inline-block;
+    font-size:24px;
 }
 
 @media print { .print-btn { display:none; } }
@@ -70,28 +94,10 @@ const format = params.get("format");
 
 const printArea = document.getElementById("printArea");
 
-function randomNumber(digit){
-    const min = Math.pow(10,digit-1);
-    const max = Math.pow(10,digit)-1;
+function randomNumber(d){
+    const min = Math.pow(10,d-1);
+    const max = Math.pow(10,d)-1;
     return Math.floor(Math.random()*(max-min+1))+min;
-}
-
-function hasCarry(a,b){
-    while(a>0||b>0){
-        if((a%10)+(b%10)>=10) return true;
-        a=Math.floor(a/10);
-        b=Math.floor(b/10);
-    }
-    return false;
-}
-
-function hasBorrow(a,b){
-    while(a>0||b>0){
-        if((a%10)<(b%10)) return true;
-        a=Math.floor(a/10);
-        b=Math.floor(b/10);
-    }
-    return false;
 }
 
 function generateProblem(){
@@ -100,24 +106,12 @@ function generateProblem(){
         a=randomNumber(digit1);
         b=randomNumber(digit2);
 
-        if(operation==="add"){
-            const carry=hasCarry(a,b);
-            if(option==="carry_yes"&&carry) break;
-            if(option==="carry_no"&&!carry) break;
-        }
-        else if(operation==="sub"){
-            if(a<b) continue;
-            const borrow=hasBorrow(a,b);
-            if(option==="borrow_yes"&&borrow) break;
-            if(option==="borrow_no"&&!borrow) break;
-        }
-        else if(operation==="mul"){ break; }
-        else if(operation==="div"){
+        if(operation==="div"){
             if(b===0) continue;
             const r=a%b;
             if(option==="remainder_yes"&&r!==0) break;
             if(option==="remainder_no"&&r===0) break;
-        }
+        } else break;
     }
     return {a,b};
 }
@@ -129,21 +123,64 @@ function getSymbol(op){
     if(op==="div") return "÷";
 }
 
-function createVertical(a,b,symbol){
-    const box=document.createElement("div");
-    box.className="vertical-box";
+function createVertical(number,a,b,symbol){
 
-    box.innerHTML=
-        `${a}<br>`+
-        `${symbol}${b}<div class="vertical-line"></div>`;
+    const wrapper=document.createElement("div");
 
-    return box;
+    const maxLength = Math.max(String(a).length,String(b).length);
+    const width = 6;
+
+    const top = String(a).padStart(width," ");
+    const bottom = String(b).padStart(width," ");
+    const bottomLine = symbol + bottom.substring(1);
+
+    wrapper.innerHTML =
+        number + ".<br>" +
+        top + "<br>" +
+        bottomLine +
+        "<div class='vertical-line'></div>";
+
+    return wrapper;
+}
+
+function createDivision(number,a,b){
+
+    const wrapper=document.createElement("div");
+    wrapper.className="division-box";
+
+    wrapper.innerHTML =
+        number+".<br>" +
+        "　　　<br>" +
+        "　―――――<br>" +
+        b + " ) " + a;
+
+    return wrapper;
+}
+
+function getTitle(){
+    const opText =
+        operation==="add"?"たしざん":
+        operation==="sub"?"ひきざん":
+        operation==="mul"?"かけざん":
+        "わりざん";
+
+    return digit1 + "けた と " + digit2 + "けた の " + opText;
 }
 
 for(let p=0;p<pages;p++){
 
     const pageDiv=document.createElement("div");
     pageDiv.className="page";
+
+    const header=document.createElement("div");
+    header.className="header";
+
+    header.innerHTML =
+        "<div class='title'>" + getTitle() + "</div>" +
+        "<div class='name-line'>" +
+        "<div>なまえ：＿＿＿＿＿＿＿＿</div>" +
+        "<div>ひづけ：＿＿＿＿＿＿＿＿</div>" +
+        "</div>";
 
     const columnsDiv=document.createElement("div");
     columnsDiv.className="columns";
@@ -154,27 +191,30 @@ for(let p=0;p<pages;p++){
     const col2=document.createElement("div");
     col2.className="column";
 
-    const used=new Set();
-
     for(let i=0;i<qpp;i++){
 
-        let data,key;
-        do{
-            data=generateProblem();
-            key=`${data.a}_${data.b}`;
-        }while(used.has(key));
-        used.add(key);
-
+        const data=generateProblem();
         const wrapper=document.createElement("div");
         wrapper.className="problem";
 
+        const number=i+1;
+
         if(format==="vertical"){
-            wrapper.appendChild(
-                createVertical(data.a,data.b,getSymbol(operation))
-            );
-        }else{
-            wrapper.textContent=
-                `${i+1}. ${data.a} ${getSymbol(operation)} ${data.b} =`;
+            if(operation==="div"){
+                wrapper.appendChild(
+                    createDivision(number,data.a,data.b)
+                );
+            } else {
+                wrapper.appendChild(
+                    createVertical(number,data.a,data.b,getSymbol(operation))
+                );
+            }
+        } else {
+            wrapper.textContent =
+                number + ". " +
+                data.a + " " +
+                getSymbol(operation) + " " +
+                data.b + " =";
         }
 
         if(i<qpp/2){ col1.appendChild(wrapper); }
@@ -183,7 +223,10 @@ for(let p=0;p<pages;p++){
 
     columnsDiv.appendChild(col1);
     columnsDiv.appendChild(col2);
+
+    pageDiv.appendChild(header);
     pageDiv.appendChild(columnsDiv);
+
     printArea.appendChild(pageDiv);
 }
 
