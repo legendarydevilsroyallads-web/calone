@@ -2,271 +2,217 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>計算プリント</title>
+<title>けいさんくん プリント</title>
 
 <style>
-@page { size:A4; margin:10mm; }
+@page { size:A4; margin:1cm; }
 
-body{
-  margin:0;
-  font-family:"Courier New", monospace;
-  font-size:10pt;
+body {
+    font-family: monospace;
+    margin:0;
 }
 
-.print-area{ padding:10px; }
-.print-btn{ padding:6px 14px; font-size:10pt; cursor:pointer; }
-
-@media print{
-  .print-area{ display:none; }
+.print-btn {
+    margin:20px;
+    padding:10px 20px;
+    font-size:16px;
 }
 
-.page{
-  width:190mm;
-  height:277mm;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  column-gap:20mm;
+.page {
+    height: calc(297mm - 2cm);
+    display:flex;
+    flex-direction:column;
+    page-break-after:always;
 }
 
-.column{
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
+.header {
+    margin-bottom:20px;
 }
 
-.problem{
-  display:grid;
-  grid-template-columns:18mm auto;
-  align-items:start;
+.title {
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:10px;
 }
 
-/* ===== 縦計算（足し算・引き算・かけ算） ===== */
-
-.vertical{
-  display:grid;
-  grid-template-columns:1ch repeat(6,1ch);
-  line-height:1.2;
+.name-line {
+    display:flex;
+    justify-content:space-between;
+    font-size:18px;
+    margin-bottom:10px;
 }
 
-.line{
-  grid-column:1 / span 7;
-  border-top:1px solid black;
-  margin-top:2px;
+.columns {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    flex:1;
 }
 
-/* ===== 割り算（文字列方式） ===== */
-
-.div-text{
-  white-space:pre;
-  line-height:1.2;
+.column {
+    display:flex;
+    flex-direction:column;
+    justify-content:space-evenly;
+    padding:0 40px;
 }
+
+.problem {
+    font-size:24px;
+}
+
+.vertical-block {
+    display:inline-block;
+    text-align:right;
+    width:8ch;   /* ← 幅を広げた */
+}
+
+.vertical-line {
+    border-top:2px solid black;
+    margin-top:4px;
+}
+
+@media print { .print-btn { display:none; } }
+
 </style>
 </head>
 <body>
 
-<div class="print-area">
 <button class="print-btn" onclick="window.print()">印刷する</button>
-</div>
-
-<div class="page">
-<div class="column" id="col1"></div>
-<div class="column" id="col2"></div>
-</div>
+<div id="printArea"></div>
 
 <script>
 
-const params=new URLSearchParams(window.location.search);
-const operation=params.get("operation")||"add";
-const option=params.get("option")||"carry_yes";
-const digit1=parseInt(params.get("digit1"))||2;
-const digit2=parseInt(params.get("digit2"))||1;
+const params = new URLSearchParams(window.location.search);
 
-const TOTAL=20, PER_COL=10;
+const operation = params.get("operation");
+const option = params.get("option");
+const digit1 = parseInt(params.get("digit1"));
+const digit2 = parseInt(params.get("digit2"));
+const qpp = parseInt(params.get("qpp"));
+const pages = parseInt(params.get("pages"));
+const format = params.get("format") || "horizontal";
 
-/* ===== 基本 ===== */
+const printArea = document.getElementById("printArea");
+
+/* ===== 生成 ===== */
 
 function randomNumber(d){
-  const min=Math.pow(10,d-1);
-  const max=Math.pow(10,d)-1;
-  return Math.floor(Math.random()*(max-min+1))+min;
+    const min=Math.pow(10,d-1);
+    const max=Math.pow(10,d)-1;
+    return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-function pad(n){ return String(n).padStart(6," "); }
+function generateProblem(){
+    let a,b;
+    while(true){
+        a=randomNumber(digit1);
+        b=randomNumber(digit2);
 
-function getSymbol(){
-  if(operation==="add") return "+";
-  if(operation==="sub") return "-";
-  if(operation==="mul") return "×";
-}
-
-/* ===== 判定 ===== */
-
-function hasCarry(a,b){
-  while(a>0||b>0){
-    if((a%10)+(b%10)>=10) return true;
-    a=Math.floor(a/10);
-    b=Math.floor(b/10);
-  }
-  return false;
-}
-
-function hasBorrow(a,b){
-  while(a>0||b>0){
-    if((a%10)<(b%10)) return true;
-    a=Math.floor(a/10);
-    b=Math.floor(b/10);
-  }
-  return false;
-}
-
-/* ===== 足し算 ===== */
-
-function generateAdd(){
-  for(let i=0;i<500;i++){
-    let a=randomNumber(digit1);
-    let b=randomNumber(digit2);
-    if(option==="carry_yes"&&!hasCarry(a,b)) continue;
-    if(option==="carry_no"&&hasCarry(a,b)) continue;
+        if(operation==="div"){
+            if(b===0) continue;
+            const r=a%b;
+            if(option==="remainder_yes"&&r!==0) break;
+            if(option==="remainder_no"&&r===0) break;
+        } else break;
+    }
     return {a,b};
-  }
-  return {a:randomNumber(digit1),b:randomNumber(digit2)};
 }
 
-/* ===== 引き算 ===== */
-
-function generateSub(){
-  for(let i=0;i<500;i++){
-    let a=randomNumber(digit1);
-    let b=randomNumber(digit2);
-    if(a<b) continue;
-    if(option==="borrow_yes"&&!hasBorrow(a,b)) continue;
-    if(option==="borrow_no"&&hasBorrow(a,b)) continue;
-    return {a,b};
-  }
-  let a=randomNumber(digit1);
-  let b=randomNumber(digit2);
-  if(a<b){let t=a;a=b;b=t;}
-  return {a,b};
+function getSymbol(op){
+    if(op==="add") return "+";
+    if(op==="sub") return "-";
+    if(op==="mul") return "×";
+    if(op==="div") return "÷";
 }
 
-/* ===== かけ算 ===== */
+/* ===== 筆算 ===== */
 
-function generateMul(){
-  return {a:randomNumber(digit1),b:randomNumber(digit2)};
+function createVertical(number,a,b,symbol){
+
+    const block=document.createElement("div");
+    block.className="vertical-block";
+
+    const width=8;
+
+    const top=String(a).padStart(width," ");
+    const bottom=String(b).padStart(width," ");
+
+    const bottomLine =
+        symbol + bottom.substring(1);  // 記号を固定左端へ
+
+    block.innerHTML =
+        number + ".<br>" +
+        top + "<br>" +
+        bottomLine +
+        "<div class='vertical-line'></div>";
+
+    return block;
 }
 
-/* ===== 割り算 ===== */
+/* ===== レイアウト ===== */
 
-function generateDiv(){
-  for(let i=0;i<500;i++){
-    const divisor=randomNumber(digit2);
-    const quotient=randomNumber(Math.max(1,digit1-digit2+1));
-    let dividend=divisor*quotient;
+function getTitle(){
+    const opText =
+        operation==="add"?"たしざん":
+        operation==="sub"?"ひきざん":
+        operation==="mul"?"かけざん":
+        "わりざん";
 
-    if(option==="remainder_yes"){
-      const r=Math.floor(Math.random()*(divisor-1))+1;
-      dividend+=r;
+    return digit1+"けた と "+digit2+"けた の "+opText;
+}
+
+for(let p=0;p<pages;p++){
+
+    const page=document.createElement("div");
+    page.className="page";
+
+    const header=document.createElement("div");
+    header.className="header";
+    header.innerHTML =
+        "<div class='title'>"+getTitle()+"</div>" +
+        "<div class='name-line'>" +
+        "<div>なまえ：＿＿＿＿＿＿＿＿</div>" +
+        "<div>ひづけ：＿＿＿＿＿＿＿＿</div>" +
+        "</div>";
+
+    const columns=document.createElement("div");
+    columns.className="columns";
+
+    const col1=document.createElement("div");
+    col1.className="column";
+    const col2=document.createElement("div");
+    col2.className="column";
+
+    for(let i=0;i<qpp;i++){
+
+        const data=generateProblem();
+        const wrapper=document.createElement("div");
+        wrapper.className="problem";
+
+        const number=i+1;
+
+        if(format==="vertical"){
+            wrapper.appendChild(
+                createVertical(number,data.a,data.b,getSymbol(operation))
+            );
+        } else {
+            wrapper.textContent =
+                number + ". " +
+                data.a + " " +
+                getSymbol(operation) + " " +
+                data.b + " =";
+        }
+
+        if(i<qpp/2) col1.appendChild(wrapper);
+        else col2.appendChild(wrapper);
     }
 
-    if(String(dividend).length===digit1)
-      return {a:dividend,b:divisor};
-  }
-  return {a:randomNumber(digit1),b:randomNumber(digit2)};
-}
+    columns.appendChild(col1);
+    columns.appendChild(col2);
 
-/* ===== 描画 ===== */
-
-function createVertical(n,a,b){
-
-  const wrapper=document.createElement("div");
-  wrapper.className="problem";
-
-  const number=document.createElement("div");
-  number.textContent="("+n+")";
-
-  const grid=document.createElement("div");
-  grid.className="vertical";
-
-  for(let i=0;i<7;i++)
-    grid.appendChild(document.createElement("div"));
-
-  grid.appendChild(document.createElement("div"));
-  pad(a).split("").forEach(ch=>{
-    const d=document.createElement("div");
-    d.textContent=ch===" "?"":ch;
-    grid.appendChild(d);
-  });
-
-  const sym=document.createElement("div");
-  sym.textContent=getSymbol();
-  grid.appendChild(sym);
-
-  pad(b).split("").forEach(ch=>{
-    const d=document.createElement("div");
-    d.textContent=ch===" "?"":ch;
-    grid.appendChild(d);
-  });
-
-  const line=document.createElement("div");
-  line.className="line";
-  grid.appendChild(line);
-
-  wrapper.appendChild(number);
-  wrapper.appendChild(grid);
-  return wrapper;
-}
-
-/* ===== 割り算（文字列方式で完全安定） ===== */
-
-function createDivision(n, dividend, divisor){
-
-  const wrapper=document.createElement("div");
-  wrapper.className="problem";
-
-  const number=document.createElement("div");
-  number.textContent="("+n+")";
-
-  const container=document.createElement("div");
-  container.className="div-text";
-
-  const dividendStr=String(dividend);
-  const divisorStr=String(divisor);
-
-  const line =
-    " ".repeat(divisorStr.length + 1) +
-    "―".repeat(dividendStr.length);
-
-  const body =
-    divisorStr + "）" + dividendStr;
-
-  container.textContent = line + "\n" + body;
-
-  wrapper.appendChild(number);
-  wrapper.appendChild(container);
-
-  return wrapper;
-}
-
-/* ===== 出力 ===== */
-
-for(let i=1;i<=TOTAL;i++){
-
-  let pair;
-
-  if(operation==="add") pair=generateAdd();
-  if(operation==="sub") pair=generateSub();
-  if(operation==="mul") pair=generateMul();
-  if(operation==="div") pair=generateDiv();
-
-  const problem=
-    operation==="div"
-    ? createDivision(i,pair.a,pair.b)
-    : createVertical(i,pair.a,pair.b);
-
-  if(i<=PER_COL)
-    col1.appendChild(problem);
-  else
-    col2.appendChild(problem);
+    page.appendChild(header);
+    page.appendChild(columns);
+    printArea.appendChild(page);
 }
 
 </script>
