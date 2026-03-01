@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四則演算プリント作成サイト けいさんくん</title>
+
+<style>
+body {
+    font-family: sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+label {
+    display: block;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+select, input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    font-size: 16px;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+.row select {
+    flex: 1;
+}
+
+button {
+    margin-top: 30px;
+    width: 100%;
+    padding: 12px;
+    font-size: 18px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #45a049;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>四則演算プリント作成サイト<br>けいさんくん</h1>
+
+<form id="settingsForm">
+
+<!-- 1 計算種類 -->
+<label>1. 計算の種類</label>
+<select id="operation">
+    <option value="add">足し算</option>
+    <option value="sub">引き算</option>
+    <option value="mul">かけ算</option>
+    <option value="div">わり算</option>
+</select>
+
+<!-- 2 オプション -->
+<label>2. 条件</label>
+<select id="option">
+    <option value="carry_yes">あり</option>
+    <option value="carry_no">なし</option>
+</select>
+
+<!-- 3 桁数 -->
+<label>3. 何桁と何桁の式にするか</label>
+<div class="row">
+    <select id="digit1">
+        <option value="1">1桁</option>
+        <option value="2">2桁</option>
+        <option value="3">3桁</option>
+    </select>
+    <select id="digit2">
+        <option value="1">1桁</option>
+        <option value="2">2桁</option>
+        <option value="3">3桁</option>
+    </select>
+</div>
+
+<!-- 4 問題数 -->
+<label>4. A4 1枚あたりの問題数</label>
+<select id="questionsPerPage">
+    <option value="10">10問</option>
+    <option value="20">20問</option>
+</select>
+
+<!-- 5 枚数 -->
+<label>5. 作成する枚数</label>
+<select id="pageCount">
+    <option value="1">1枚</option>
+    <option value="2">2枚</option>
+    <option value="3">3枚</option>
+    <option value="4">4枚</option>
+    <option value="5">5枚</option>
+</select>
+
+<button type="submit">プリントを作成する</button>
+
+</form>
+</div>
+
+<script>
+
+// 計算種類に応じて条件ラベル変更
+const operationSelect = document.getElementById("operation");
+const optionSelect = document.getElementById("option");
+
+operationSelect.addEventListener("change", function() {
+
+    if (this.value === "add") {
+        optionSelect.innerHTML = `
+            <option value="carry_yes">繰り上がりあり</option>
+            <option value="carry_no">繰り上がりなし</option>`;
+    }
+    else if (this.value === "sub") {
+        optionSelect.innerHTML = `
+            <option value="borrow_yes">繰り下がりあり</option>
+            <option value="borrow_no">繰り下がりなし</option>`;
+    }
+    else if (this.value === "div") {
+        optionSelect.innerHTML = `
+            <option value="remainder_yes">あまりあり</option>
+            <option value="remainder_no">あまりなし</option>`;
+    }
+    else {
+        optionSelect.innerHTML = `
+            <option value="none">特になし</option>`;
+    }
+
+});
+
+// 今は仮：送信時に値をコンソール表示
+document.getElementById("settingsForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const settings = {
+        operation: operationSelect.value,
+        option: optionSelect.value,
+        digit1: document.getElementById("digit1").value,
+        digit2: document.getElementById("digit2").value,
+        questionsPerPage: document.getElementById("questionsPerPage").value,
+        pageCount: document.getElementById("pageCount").value
+    };
+
+    console.log(settings);
+    alert("設定を取得しました（次に問題生成へ接続します）");
+});
+
+</script>
+
+</body>
+</html>
