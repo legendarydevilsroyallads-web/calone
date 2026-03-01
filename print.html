@@ -40,7 +40,7 @@ body{
   align-items:start;
 }
 
-/* ===== 足し算・引き算・かけ算 ===== */
+/* ===== 縦計算（足し算・引き算・かけ算） ===== */
 
 .vertical{
   display:grid;
@@ -54,12 +54,11 @@ body{
   margin-top:2px;
 }
 
-/* ===== 割り算 ===== */
+/* ===== 割り算（文字列方式） ===== */
 
-.div-grid{
-  display:grid;
-  grid-template-columns:repeat(16,1ch);
-  row-gap:2px;
+.div-text{
+  white-space:pre;
+  line-height:1.2;
 }
 </style>
 </head>
@@ -217,7 +216,9 @@ function createVertical(n,a,b){
   return wrapper;
 }
 
-function createDivision(n,dividend,divisor){
+/* ===== 割り算（文字列方式で完全安定） ===== */
+
+function createDivision(n, dividend, divisor){
 
   const wrapper=document.createElement("div");
   wrapper.className="problem";
@@ -225,40 +226,24 @@ function createDivision(n,dividend,divisor){
   const number=document.createElement("div");
   number.textContent="("+n+")";
 
-  const grid=document.createElement("div");
-  grid.className="div-grid";
+  const container=document.createElement("div");
+  container.className="div-text";
 
-  const divisorStr=String(divisor);
   const dividendStr=String(dividend);
+  const divisorStr=String(divisor);
 
-  const bracketCol=4;
+  const line =
+    " ".repeat(divisorStr.length + 1) +
+    "―".repeat(dividendStr.length);
 
-  /* 横線（ ）の上から開始） */
-  const line=document.createElement("div");
-  line.style.gridColumn=(bracketCol-1)+" / span "+(dividendStr.length+1);
-  line.style.borderTop="1px solid black";
-  grid.appendChild(line);
+  const body =
+    divisorStr + "）" + dividendStr;
 
-  /* 割る数 */
-  const divisorDiv=document.createElement("div");
-  divisorDiv.textContent=divisorStr;
-  divisorDiv.style.gridColumn=(bracketCol-divisorStr.length);
-  grid.appendChild(divisorDiv);
-
-  /* ） */
-  const bracket=document.createElement("div");
-  bracket.textContent="）";
-  bracket.style.gridColumn=bracketCol;
-  grid.appendChild(bracket);
-
-  /* 割られる数 */
-  const dividendDiv=document.createElement("div");
-  dividendDiv.textContent=dividendStr;
-  dividendDiv.style.gridColumn=(bracketCol+1)+" / span "+dividendStr.length;
-  grid.appendChild(dividendDiv);
+  container.textContent = line + "\n" + body;
 
   wrapper.appendChild(number);
-  wrapper.appendChild(grid);
+  wrapper.appendChild(container);
+
   return wrapper;
 }
 
