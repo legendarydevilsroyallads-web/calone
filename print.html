@@ -60,6 +60,8 @@ const digit2 = parseInt(params.get("digit2")) || 1;
 
 const TOTAL=20, PER_COL=10;
 
+/* ===== 基本生成 ===== */
+
 function randomNumber(d){
     const min=Math.pow(10,d-1);
     const max=Math.pow(10,d)-1;
@@ -74,58 +76,67 @@ function getSymbol(){
     if(operation==="mul") return "×";
 }
 
+/* ===== 条件判定 ===== */
+
+function hasCarry(a,b){
+    while(a>0||b>0){
+        if((a%10)+(b%10)>=10) return true;
+        a=Math.floor(a/10);
+        b=Math.floor(b/10);
+    }
+    return false;
+}
+
+function hasBorrow(a,b){
+    while(a>0||b>0){
+        if((a%10)<(b%10)) return true;
+        a=Math.floor(a/10);
+        b=Math.floor(b/10);
+    }
+    return false;
+}
+
 /* ===== 足し算 ===== */
 
 function generateAdd(){
 
-    let a=randomNumber(digit1);
-    let b=randomNumber(digit2);
+    let tries=0;
+    while(tries<500){
+        tries++;
+        let a=randomNumber(digit1);
+        let b=randomNumber(digit2);
 
-    if(option==="carry_no"){
-        while(true){
-            let ok=true;
-            let x=a,y=b;
-            while(x>0||y>0){
-                if((x%10)+(y%10)>=10){ ok=false; break; }
-                x=Math.floor(x/10);
-                y=Math.floor(y/10);
-            }
-            if(ok) break;
-            a=randomNumber(digit1);
-            b=randomNumber(digit2);
-        }
+        if(option==="carry_yes" && !hasCarry(a,b)) continue;
+        if(option==="carry_no" && hasCarry(a,b)) continue;
+
+        return {a,b};
     }
 
-    return {a,b};
+    return {a:randomNumber(digit1), b:randomNumber(digit2)};
 }
 
 /* ===== 引き算 ===== */
 
 function generateSub(){
 
+    let tries=0;
+    while(tries<500){
+        tries++;
+
+        let a=randomNumber(digit1);
+        let b=randomNumber(digit2);
+
+        if(a<b) continue;
+
+        if(option==="borrow_yes" && !hasBorrow(a,b)) continue;
+        if(option==="borrow_no" && hasBorrow(a,b)) continue;
+
+        return {a,b};
+    }
+
     let a=randomNumber(digit1);
     let b=randomNumber(digit2);
-
-    if(a<b){
-        const temp=a; a=b; b=temp;
-    }
-
-    if(option==="borrow_no"){
-        while(true){
-            let ok=true;
-            let x=a,y=b;
-            while(x>0||y>0){
-                if((x%10)<(y%10)){ ok=false; break; }
-                x=Math.floor(x/10);
-                y=Math.floor(y/10);
-            }
-            if(ok) break;
-            a=randomNumber(digit1);
-            b=randomNumber(digit2);
-            if(a<b){ const t=a;a=b;b=t; }
-        }
-    }
-
+    if(a<b){ const t=a;a=b;b=t; }
     return {a,b};
 }
 
@@ -139,22 +150,26 @@ function generateMul(){
 
 function generateDiv(){
 
-    const divisor=randomNumber(digit2);
-    const quotient=randomNumber(Math.max(1,digit1-digit2+1));
+    let tries=0;
+    while(tries<500){
+        tries++;
 
-    let dividend=divisor*quotient;
+        const divisor=randomNumber(digit2);
+        const quotient=randomNumber(Math.max(1,digit1-digit2+1));
 
-    if(option==="remainder_yes"){
-        const r=Math.floor(Math.random()*(divisor-1))+1;
-        dividend+=r;
+        let dividend=divisor*quotient;
+
+        if(option==="remainder_yes"){
+            const r=Math.floor(Math.random()*(divisor-1))+1;
+            dividend+=r;
+        }
+
+        if(String(dividend).length===digit1){
+            return {a:dividend, b:divisor};
+        }
     }
 
-    // 桁数が合わない場合は再生成
-    if(String(dividend).length!==digit1){
-        return generateDiv();
-    }
-
-    return {a:dividend, b:divisor};
+    return {a:randomNumber(digit1), b:randomNumber(digit2)};
 }
 
 /* ===== 描画 ===== */
