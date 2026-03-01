@@ -5,26 +5,50 @@
 <title>けいさんくん プリント</title>
 
 <style>
-body {
-    font-family: sans-serif;
-    margin: 20px;
-}
+@page { size:A4; margin:1cm; }
+
+body { font-family:sans-serif; margin:0; }
+
+.print-btn { margin:20px; padding:10px 20px; font-size:16px; }
 
 .page {
-    page-break-after: always;
-    margin-bottom: 40px;
+    height: calc(297mm - 2cm);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    page-break-after:always;
 }
 
-.problem {
-    font-size: 22px;
-    margin: 8px 0;
+.columns {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    height:100%;
 }
 
-.print-btn {
-    margin-bottom: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
+.column {
+    display:flex;
+    flex-direction:column;
+    justify-content:space-evenly;
+    padding:0 20px;
 }
+
+.problem { font-size:26px; }
+
+.vertical-box {
+    display:inline-block;
+    text-align:right;
+    font-size:26px;
+    line-height:1.4;
+}
+
+.vertical-line {
+    border-top:2px solid black;
+    margin-top:5px;
+    width:100%;
+}
+
+@media print { .print-btn { display:none; } }
+
 </style>
 </head>
 <body>
@@ -37,47 +61,132 @@ body {
 const params = new URLSearchParams(window.location.search);
 
 const operation = params.get("operation");
+const option = params.get("option");
 const digit1 = parseInt(params.get("digit1"));
 const digit2 = parseInt(params.get("digit2"));
 const qpp = parseInt(params.get("qpp"));
 const pages = parseInt(params.get("pages"));
+const format = params.get("format");
 
 const printArea = document.getElementById("printArea");
 
-function randomNumber(digit) {
-    const min = Math.pow(10, digit - 1);
-    const max = Math.pow(10, digit) - 1;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+function randomNumber(digit){
+    const min = Math.pow(10,digit-1);
+    const max = Math.pow(10,digit)-1;
+    return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-function getSymbol(op) {
-    if (op === "add") return "+";
-    if (op === "sub") return "-";
-    if (op === "mul") return "×";
-    if (op === "div") return "÷";
+function hasCarry(a,b){
+    while(a>0||b>0){
+        if((a%10)+(b%10)>=10) return true;
+        a=Math.floor(a/10);
+        b=Math.floor(b/10);
+    }
+    return false;
 }
 
-for (let p = 0; p < pages; p++) {
+function hasBorrow(a,b){
+    while(a>0||b>0){
+        if((a%10)<(b%10)) return true;
+        a=Math.floor(a/10);
+        b=Math.floor(b/10);
+    }
+    return false;
+}
 
-    const pageDiv = document.createElement("div");
-    pageDiv.className = "page";
+function generateProblem(){
+    let a,b;
+    while(true){
+        a=randomNumber(digit1);
+        b=randomNumber(digit2);
 
-    for (let i = 0; i < qpp; i++) {
+        if(operation==="add"){
+            const carry=hasCarry(a,b);
+            if(option==="carry_yes"&&carry) break;
+            if(option==="carry_no"&&!carry) break;
+        }
+        else if(operation==="sub"){
+            if(a<b) continue;
+            const borrow=hasBorrow(a,b);
+            if(option==="borrow_yes"&&borrow) break;
+            if(option==="borrow_no"&&!borrow) break;
+        }
+        else if(operation==="mul"){ break; }
+        else if(operation==="div"){
+            if(b===0) continue;
+            const r=a%b;
+            if(option==="remainder_yes"&&r!==0) break;
+            if(option==="remainder_no"&&r===0) break;
+        }
+    }
+    return {a,b};
+}
 
-        let num1 = randomNumber(digit1);
-        let num2 = randomNumber(digit2);
+function getSymbol(op){
+    if(op==="add") return "+";
+    if(op==="sub") return "-";
+    if(op==="mul") return "×";
+    if(op==="div") return "÷";
+}
 
-        const problem = document.createElement("div");
-        problem.className = "problem";
-        problem.textContent = `${i+1}. ${num1} ${getSymbol(operation)} ${num2} =`;
+function createVertical(a,b,symbol){
+    const box=document.createElement("div");
+    box.className="vertical-box";
 
-        pageDiv.appendChild(problem);
+    box.innerHTML=
+        `${a}<br>`+
+        `${symbol}${b}<div class="vertical-line"></div>`;
+
+    return box;
+}
+
+for(let p=0;p<pages;p++){
+
+    const pageDiv=document.createElement("div");
+    pageDiv.className="page";
+
+    const columnsDiv=document.createElement("div");
+    columnsDiv.className="columns";
+
+    const col1=document.createElement("div");
+    col1.className="column";
+
+    const col2=document.createElement("div");
+    col2.className="column";
+
+    const used=new Set();
+
+    for(let i=0;i<qpp;i++){
+
+        let data,key;
+        do{
+            data=generateProblem();
+            key=`${data.a}_${data.b}`;
+        }while(used.has(key));
+        used.add(key);
+
+        const wrapper=document.createElement("div");
+        wrapper.className="problem";
+
+        if(format==="vertical"){
+            wrapper.appendChild(
+                createVertical(data.a,data.b,getSymbol(operation))
+            );
+        }else{
+            wrapper.textContent=
+                `${i+1}. ${data.a} ${getSymbol(operation)} ${data.b} =`;
+        }
+
+        if(i<qpp/2){ col1.appendChild(wrapper); }
+        else{ col2.appendChild(wrapper); }
     }
 
+    columnsDiv.appendChild(col1);
+    columnsDiv.appendChild(col2);
+    pageDiv.appendChild(columnsDiv);
     printArea.appendChild(pageDiv);
 }
 
 </script>
-
 </body>
 </html>
