@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>けいさんくん プリント</title>
+
+<style>
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+
+.page {
+    page-break-after: always;
+    margin-bottom: 40px;
+}
+
+.problem {
+    font-size: 22px;
+    margin: 8px 0;
+}
+
+.print-btn {
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">印刷する</button>
+<div id="printArea"></div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+
+const operation = params.get("operation");
+const digit1 = parseInt(params.get("digit1"));
+const digit2 = parseInt(params.get("digit2"));
+const qpp = parseInt(params.get("qpp"));
+const pages = parseInt(params.get("pages"));
+
+const printArea = document.getElementById("printArea");
+
+function randomNumber(digit) {
+    const min = Math.pow(10, digit - 1);
+    const max = Math.pow(10, digit) - 1;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getSymbol(op) {
+    if (op === "add") return "+";
+    if (op === "sub") return "-";
+    if (op === "mul") return "×";
+    if (op === "div") return "÷";
+}
+
+for (let p = 0; p < pages; p++) {
+
+    const pageDiv = document.createElement("div");
+    pageDiv.className = "page";
+
+    for (let i = 0; i < qpp; i++) {
+
+        let num1 = randomNumber(digit1);
+        let num2 = randomNumber(digit2);
+
+        const problem = document.createElement("div");
+        problem.className = "problem";
+        problem.textContent = `${i+1}. ${num1} ${getSymbol(operation)} ${num2} =`;
+
+        pageDiv.appendChild(problem);
+    }
+
+    printArea.appendChild(pageDiv);
+}
+
+</script>
+
+</body>
+</html>
