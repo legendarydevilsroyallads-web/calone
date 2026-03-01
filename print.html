@@ -54,11 +54,11 @@ body{
   margin-top:2px;
 }
 
-/* ===== 割り算（完全ch基準） ===== */
+/* ===== 割り算 ===== */
 
 .div-grid{
   display:grid;
-  grid-template-columns:repeat(14,1ch);
+  grid-template-columns:repeat(16,1ch);
   row-gap:2px;
 }
 </style>
@@ -84,7 +84,7 @@ const digit2=parseInt(params.get("digit2"))||1;
 
 const TOTAL=20, PER_COL=10;
 
-/* ===== 基本関数 ===== */
+/* ===== 基本 ===== */
 
 function randomNumber(d){
   const min=Math.pow(10,d-1);
@@ -126,10 +126,8 @@ function generateAdd(){
   for(let i=0;i<500;i++){
     let a=randomNumber(digit1);
     let b=randomNumber(digit2);
-
     if(option==="carry_yes"&&!hasCarry(a,b)) continue;
     if(option==="carry_no"&&hasCarry(a,b)) continue;
-
     return {a,b};
   }
   return {a:randomNumber(digit1),b:randomNumber(digit2)};
@@ -141,12 +139,9 @@ function generateSub(){
   for(let i=0;i<500;i++){
     let a=randomNumber(digit1);
     let b=randomNumber(digit2);
-
     if(a<b) continue;
-
     if(option==="borrow_yes"&&!hasBorrow(a,b)) continue;
     if(option==="borrow_no"&&hasBorrow(a,b)) continue;
-
     return {a,b};
   }
   let a=randomNumber(digit1);
@@ -161,7 +156,7 @@ function generateMul(){
   return {a:randomNumber(digit1),b:randomNumber(digit2)};
 }
 
-/* ===== 割り算（桁厳守＋ch配置） ===== */
+/* ===== 割り算 ===== */
 
 function generateDiv(){
   for(let i=0;i<500;i++){
@@ -236,30 +231,30 @@ function createDivision(n,dividend,divisor){
   const divisorStr=String(divisor);
   const dividendStr=String(dividend);
 
-  const startCol=4;
+  const bracketCol=4;
 
-  /* 横線 */
+  /* 横線（ ）の上から開始） */
   const line=document.createElement("div");
-  line.style.gridColumn=startCol+" / span "+dividendStr.length;
+  line.style.gridColumn=(bracketCol-1)+" / span "+(dividendStr.length+1);
   line.style.borderTop="1px solid black";
   grid.appendChild(line);
 
   /* 割る数 */
   const divisorDiv=document.createElement("div");
   divisorDiv.textContent=divisorStr;
-  divisorDiv.style.gridColumn=(startCol-divisorStr.length);
+  divisorDiv.style.gridColumn=(bracketCol-divisorStr.length);
   grid.appendChild(divisorDiv);
 
   /* ） */
   const bracket=document.createElement("div");
   bracket.textContent="）";
-  bracket.style.gridColumn=startCol;
+  bracket.style.gridColumn=bracketCol;
   grid.appendChild(bracket);
 
   /* 割られる数 */
   const dividendDiv=document.createElement("div");
   dividendDiv.textContent=dividendStr;
-  dividendDiv.style.gridColumn=(startCol+1)+" / span "+dividendStr.length;
+  dividendDiv.style.gridColumn=(bracketCol+1)+" / span "+dividendStr.length;
   grid.appendChild(dividendDiv);
 
   wrapper.appendChild(number);
