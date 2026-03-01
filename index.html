@@ -33,7 +33,7 @@ label {
     font-weight: bold;
 }
 
-select, input {
+select {
     width: 100%;
     padding: 8px;
     margin-top: 5px;
@@ -75,7 +75,6 @@ button:hover {
 
 <form id="settingsForm">
 
-<!-- 1 計算種類 -->
 <label>1. 計算の種類</label>
 <select id="operation">
     <option value="add">足し算</option>
@@ -84,14 +83,9 @@ button:hover {
     <option value="div">わり算</option>
 </select>
 
-<!-- 2 オプション -->
 <label>2. 条件</label>
-<select id="option">
-    <option value="carry_yes">あり</option>
-    <option value="carry_no">なし</option>
-</select>
+<select id="option"></select>
 
-<!-- 3 桁数 -->
 <label>3. 何桁と何桁の式にするか</label>
 <div class="row">
     <select id="digit1">
@@ -106,21 +100,18 @@ button:hover {
     </select>
 </div>
 
-<!-- 4 問題数 -->
 <label>4. A4 1枚あたりの問題数</label>
 <select id="questionsPerPage">
     <option value="10">10問</option>
     <option value="20">20問</option>
 </select>
 
-<!-- 5 枚数 -->
 <label>5. 作成する枚数</label>
 <select id="pageCount">
     <option value="1">1枚</option>
-    <option value="2">2枚</option>
-    <option value="3">3枚</option>
-    <option value="4">4枚</option>
     <option value="5">5枚</option>
+    <option value="10">10枚</option>
+    <option value="20">20枚</option>
 </select>
 
 <button type="submit">プリントを作成する</button>
@@ -130,49 +121,42 @@ button:hover {
 
 <script>
 
-// 計算種類に応じて条件ラベル変更
 const operationSelect = document.getElementById("operation");
 const optionSelect = document.getElementById("option");
 
-operationSelect.addEventListener("change", function() {
-
-    if (this.value === "add") {
+function updateOption() {
+    if (operationSelect.value === "add") {
         optionSelect.innerHTML = `
             <option value="carry_yes">繰り上がりあり</option>
             <option value="carry_no">繰り上がりなし</option>`;
-    }
-    else if (this.value === "sub") {
+    } else if (operationSelect.value === "sub") {
         optionSelect.innerHTML = `
             <option value="borrow_yes">繰り下がりあり</option>
             <option value="borrow_no">繰り下がりなし</option>`;
-    }
-    else if (this.value === "div") {
+    } else if (operationSelect.value === "div") {
         optionSelect.innerHTML = `
             <option value="remainder_yes">あまりあり</option>
             <option value="remainder_no">あまりなし</option>`;
-    }
-    else {
+    } else {
         optionSelect.innerHTML = `
             <option value="none">特になし</option>`;
     }
+}
 
-});
+operationSelect.addEventListener("change", updateOption);
+updateOption();
 
-// 今は仮：送信時に値をコンソール表示
 document.getElementById("settingsForm").addEventListener("submit", function(e){
     e.preventDefault();
 
-    const settings = {
-        operation: operationSelect.value,
-        option: optionSelect.value,
-        digit1: document.getElementById("digit1").value,
-        digit2: document.getElementById("digit2").value,
-        questionsPerPage: document.getElementById("questionsPerPage").value,
-        pageCount: document.getElementById("pageCount").value
-    };
+    const query = `?operation=${operationSelect.value}
+    &option=${optionSelect.value}
+    &digit1=${digit1.value}
+    &digit2=${digit2.value}
+    &qpp=${questionsPerPage.value}
+    &pages=${pageCount.value}`;
 
-    console.log(settings);
-    alert("設定を取得しました（次に問題生成へ接続します）");
+    window.location.href = "print.html" + query.replace(/\s/g,'');
 });
 
 </script>
