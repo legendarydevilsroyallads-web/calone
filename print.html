@@ -62,9 +62,14 @@ body {
 
 <script>
 
-/* ===== 固定仕様 ===== */
+/* ===== URLパラメータ取得 ===== */
 
-const operation = "add"; // add sub mul
+const params = new URLSearchParams(window.location.search);
+
+const operation = params.get("operation") || "add";
+const digit1 = parseInt(params.get("digit1")) || 3;
+const digit2 = parseInt(params.get("digit2")) || 3;
+
 const totalProblems = 20;
 const perColumn = 10;
 
@@ -82,6 +87,7 @@ function getSymbol(op){
     if(op==="mul") return "×";
 }
 
+/* 6桁固定表示（右揃え） */
 function pad(num){
     return String(num).padStart(6," ");
 }
@@ -100,13 +106,12 @@ function createProblem(n,a,b){
     const grid = document.createElement("div");
     grid.className = "vertical";
 
-    // 空白1行（番号との余白）
+    /* 空行 */
     for(let i=0;i<7;i++){
-        const d=document.createElement("div");
-        grid.appendChild(d);
+        grid.appendChild(document.createElement("div"));
     }
 
-    // 上段
+    /* 上段 */
     grid.appendChild(document.createElement("div"));
     pad(a).split("").forEach(ch=>{
         const d=document.createElement("div");
@@ -114,7 +119,7 @@ function createProblem(n,a,b){
         grid.appendChild(d);
     });
 
-    // 下段
+    /* 下段 */
     const sym=document.createElement("div");
     sym.textContent=getSymbol(operation);
     grid.appendChild(sym);
@@ -139,10 +144,10 @@ function createProblem(n,a,b){
 
 for(let i=1;i<=totalProblems;i++){
 
-    const a=randomNumber(3);
-    const b=randomNumber(3);
+    const a = randomNumber(digit1);
+    const b = randomNumber(digit2);
 
-    const problem=createProblem(i,a,b);
+    const problem = createProblem(i,a,b);
 
     if(i<=perColumn){
         document.getElementById("col1").appendChild(problem);
