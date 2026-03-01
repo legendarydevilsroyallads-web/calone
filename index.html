@@ -6,69 +6,19 @@
 <title>四則演算プリント作成サイト けいさんくん</title>
 
 <style>
-body {
-    font-family: sans-serif;
-    background: #f5f5f5;
-    margin: 0;
-    padding: 20px;
-}
-
-.container {
-    max-width: 600px;
-    margin: auto;
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-h1 {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-label {
-    display: block;
-    margin-top: 20px;
-    font-weight: bold;
-}
-
-select {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    font-size: 16px;
-}
-
-.row {
-    display: flex;
-    gap: 10px;
-}
-
-.row select {
-    flex: 1;
-}
-
-button {
-    margin-top: 30px;
-    width: 100%;
-    padding: 12px;
-    font-size: 18px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #45a049;
-}
+body { font-family: sans-serif; background:#f5f5f5; margin:0; padding:20px; }
+.container { max-width:600px; margin:auto; background:white; padding:30px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
+h1 { text-align:center; margin-bottom:30px; }
+label { display:block; margin-top:20px; font-weight:bold; }
+select { width:100%; padding:8px; margin-top:5px; font-size:16px; }
+.row { display:flex; gap:10px; }
+.row select { flex:1; }
+button { margin-top:30px; width:100%; padding:12px; font-size:18px; background:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer;}
+button:hover { background:#45a049; }
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
 <h1>四則演算プリント作成サイト<br>けいさんくん</h1>
@@ -114,52 +64,7 @@ button:hover {
     <option value="20">20枚</option>
 </select>
 
-<button type="submit">プリントを作成する</button>
-
-</form>
-</div>
-
-<script>
-
-const operationSelect = document.getElementById("operation");
-const optionSelect = document.getElementById("option");
-
-function updateOption() {
-    if (operationSelect.value === "add") {
-        optionSelect.innerHTML = `
-            <option value="carry_yes">繰り上がりあり</option>
-            <option value="carry_no">繰り上がりなし</option>`;
-    } else if (operationSelect.value === "sub") {
-        optionSelect.innerHTML = `
-            <option value="borrow_yes">繰り下がりあり</option>
-            <option value="borrow_no">繰り下がりなし</option>`;
-    } else if (operationSelect.value === "div") {
-        optionSelect.innerHTML = `
-            <option value="remainder_yes">あまりあり</option>
-            <option value="remainder_no">あまりなし</option>`;
-    } else {
-        optionSelect.innerHTML = `
-            <option value="none">特になし</option>`;
-    }
-}
-
-operationSelect.addEventListener("change", updateOption);
-updateOption();
-
-document.getElementById("settingsForm").addEventListener("submit", function(e){
-    e.preventDefault();
-
-    const query = `?operation=${operationSelect.value}
-    &option=${optionSelect.value}
-    &digit1=${digit1.value}
-    &digit2=${digit2.value}
-    &qpp=${questionsPerPage.value}
-    &pages=${pageCount.value}`;
-
-    window.location.href = "print.html" + query.replace(/\s/g,'');
-});
-
-</script>
-
-</body>
-</html>
+<label>6. 表示形式</label>
+<select id="formatType">
+    <option value="horizontal">横の式</option>
+    <
