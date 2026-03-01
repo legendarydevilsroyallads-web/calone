@@ -2,107 +2,73 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>けいさんくん プリント</title>
+<title>計算プリント</title>
 
 <style>
-@page { size:A4; margin:1cm; }
-
-body {
-    font-family: monospace;
-    margin:0;
+@page {
+    size: A4;
+    margin: 10mm;
 }
 
-.print-btn {
-    margin:20px;
-    padding:10px 20px;
+body {
+    margin: 0;
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
 }
 
 .page {
-    height: calc(297mm - 2cm);
-    display:flex;
-    flex-direction:column;
-    page-break-after:always;
-}
-
-.header {
-    margin-bottom:20px;
-}
-
-.title {
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-}
-
-.name-line {
-    display:flex;
-    justify-content:space-between;
-    font-size:18px;
-    margin-top:10px;
-}
-
-.columns {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    flex:1;
+    width: 190mm;
+    height: 277mm;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 20mm;
 }
 
 .column {
-    display:flex;
-    flex-direction:column;
-    justify-content:space-evenly;
-    padding:0 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .problem {
-    font-size:24px;
+    display: grid;
+    grid-template-columns: 18mm auto;
+    align-items: start;
+}
+
+.number {
+    font-size: 10pt;
 }
 
 .vertical {
-    display:inline-block;
-    text-align:right;
-    width:8ch; /* ← ここ重要：固定桁幅 */
+    display: grid;
+    grid-template-columns: 1ch repeat(6,1ch);
+    line-height: 1.2;
 }
 
 .line {
-    border-top:2px solid black;
-    width:8ch;
-    margin-top:5px;
+    grid-column: 1 / span 7;
+    border-top: 1px solid black;
+    margin-top: 2px;
 }
-
-.division {
-    display:inline-block;
-    font-size:24px;
-}
-
-.answer-line {
-    border-top:2px solid black;
-    width:8ch;
-    margin-left:4ch;
-    margin-bottom:3px;
-}
-
-@media print { .print-btn { display:none; } }
-
 </style>
 </head>
 <body>
 
-<button class="print-btn" onclick="window.print()">印刷する</button>
-<div id="printArea"></div>
+<div class="page">
+    <div class="column" id="col1"></div>
+    <div class="column" id="col2"></div>
+</div>
 
 <script>
 
-const params = new URLSearchParams(window.location.search);
+/* ===== 固定仕様 ===== */
 
-const operation = params.get("operation");
-const digit1 = parseInt(params.get("digit1"));
-const digit2 = parseInt(params.get("digit2"));
-const qpp = parseInt(params.get("qpp"));
-const pages = parseInt(params.get("pages"));
-const format = params.get("format");
+const operation = "add"; // add sub mul
+const totalProblems = 20;
+const perColumn = 10;
 
-const printArea = document.getElementById("printArea");
+/* ===== 数字生成 ===== */
 
 function randomNumber(d){
     const min = Math.pow(10,d-1);
@@ -110,111 +76,82 @@ function randomNumber(d){
     return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-function generateProblem(){
-    return {
-        a: randomNumber(digit1),
-        b: randomNumber(digit2)
-    };
-}
-
 function getSymbol(op){
     if(op==="add") return "+";
     if(op==="sub") return "-";
     if(op==="mul") return "×";
-    if(op==="div") return "÷";
 }
 
-function createVertical(num,a,b,symbol){
-
-    const wrapper=document.createElement("div");
-
-    wrapper.innerHTML =
-        "(" + num + ")<br>" +
-        "<div class='vertical'>" + a + "</div><br>" +
-        "<div class='vertical'>" + symbol + b + "</div>" +
-        "<div class='line'></div>";
-
-    return wrapper;
+function pad(num){
+    return String(num).padStart(6," ");
 }
 
-function createDivision(num,a,b){
+/* ===== 問題生成 ===== */
 
-    const wrapper=document.createElement("div");
-    wrapper.className="division";
+function createProblem(n,a,b){
 
-    wrapper.innerHTML =
-        "(" + num + ")<br>" +
-        "<div class='answer-line'></div>" +
-        b + " ) " + a;
+    const wrapper = document.createElement("div");
+    wrapper.className = "problem";
 
-    return wrapper;
-}
+    const numDiv = document.createElement("div");
+    numDiv.className = "number";
+    numDiv.textContent = "(" + n + ")";
 
-for(let p=0;p<pages;p++){
+    const grid = document.createElement("div");
+    grid.className = "vertical";
 
-    const pageDiv=document.createElement("div");
-    pageDiv.className="page";
-
-    const header=document.createElement("div");
-    header.className="header";
-
-    header.innerHTML =
-        "<div class='title'>計算プリント</div>" +
-        "<div class='name-line'>" +
-        "<div>なまえ：＿＿＿＿＿＿＿＿</div>" +
-        "<div>ひづけ：＿＿＿＿＿＿＿＿</div>" +
-        "</div>";
-
-    const columnsDiv=document.createElement("div");
-    columnsDiv.className="columns";
-
-    const col1=document.createElement("div");
-    col1.className="column";
-
-    const col2=document.createElement("div");
-    col2.className="column";
-
-    for(let i=0;i<qpp;i++){
-
-        const data=generateProblem();
-        const wrapper=document.createElement("div");
-        wrapper.className="problem";
-
-        const number=i+1;
-
-        if(format==="vertical"){
-
-            if(operation==="div"){
-                wrapper.appendChild(
-                    createDivision(number,data.a,data.b)
-                );
-            }else{
-                wrapper.appendChild(
-                    createVertical(number,data.a,data.b,getSymbol(operation))
-                );
-            }
-
-        } else {
-
-            wrapper.textContent =
-                "(" + number + ") " +
-                data.a + " " +
-                getSymbol(operation) + " " +
-                data.b + " =";
-        }
-
-        if(i<qpp/2){ col1.appendChild(wrapper); }
-        else{ col2.appendChild(wrapper); }
+    // 空白1行（番号との余白）
+    for(let i=0;i<7;i++){
+        const d=document.createElement("div");
+        grid.appendChild(d);
     }
 
-    columnsDiv.appendChild(col1);
-    columnsDiv.appendChild(col2);
+    // 上段
+    grid.appendChild(document.createElement("div"));
+    pad(a).split("").forEach(ch=>{
+        const d=document.createElement("div");
+        d.textContent = ch===" "?"":ch;
+        grid.appendChild(d);
+    });
 
-    pageDiv.appendChild(header);
-    pageDiv.appendChild(columnsDiv);
-    printArea.appendChild(pageDiv);
+    // 下段
+    const sym=document.createElement("div");
+    sym.textContent=getSymbol(operation);
+    grid.appendChild(sym);
+
+    pad(b).split("").forEach(ch=>{
+        const d=document.createElement("div");
+        d.textContent = ch===" "?"":ch;
+        grid.appendChild(d);
+    });
+
+    const line=document.createElement("div");
+    line.className="line";
+    grid.appendChild(line);
+
+    wrapper.appendChild(numDiv);
+    wrapper.appendChild(grid);
+
+    return wrapper;
+}
+
+/* ===== 配置 ===== */
+
+for(let i=1;i<=totalProblems;i++){
+
+    const a=randomNumber(3);
+    const b=randomNumber(3);
+
+    const problem=createProblem(i,a,b);
+
+    if(i<=perColumn){
+        document.getElementById("col1").appendChild(problem);
+    }else{
+        document.getElementById("col2").appendChild(problem);
+    }
 }
 
 </script>
+
 </body>
 </html>
