@@ -63,7 +63,7 @@ body {
 .vertical-block {
     display:inline-block;
     text-align:right;
-    width:8ch;   /* ← 幅を広げた */
+    width:8ch;
 }
 
 .vertical-line {
@@ -94,8 +94,6 @@ const format = params.get("format") || "horizontal";
 
 const printArea = document.getElementById("printArea");
 
-/* ===== 生成 ===== */
-
 function randomNumber(d){
     const min=Math.pow(10,d-1);
     const max=Math.pow(10,d)-1;
@@ -125,20 +123,14 @@ function getSymbol(op){
     if(op==="div") return "÷";
 }
 
-/* ===== 筆算 ===== */
-
 function createVertical(number,a,b,symbol){
-
     const block=document.createElement("div");
     block.className="vertical-block";
 
     const width=8;
-
     const top=String(a).padStart(width," ");
     const bottom=String(b).padStart(width," ");
-
-    const bottomLine =
-        symbol + bottom.substring(1);  // 記号を固定左端へ
+    const bottomLine = symbol + bottom.substring(1);
 
     block.innerHTML =
         number + ".<br>" +
@@ -148,8 +140,6 @@ function createVertical(number,a,b,symbol){
 
     return block;
 }
-
-/* ===== レイアウト ===== */
 
 function getTitle(){
     const opText =
